@@ -7,6 +7,15 @@
 //
 
 #import "TimelineVC.h"
+#import "TweetCell.h"
+#import "UIImageView+AFNetworking.h"
+#import "TweetViewController.h"
+#import "ComposeViewController.h"
+
+#define nameHeight 21.0f
+#define spaceBetweenNameAndText 7.0f
+#define cellWidth 320.0f
+#define cellMargin 13.0f
 
 @interface TimelineVC ()
 
@@ -14,6 +23,7 @@
 
 - (void)onSignOutButton;
 - (void)reload;
+- (void)compose;
 
 @end
 
@@ -34,13 +44,19 @@
 {
     [super viewDidLoad];
     
-    self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:@"Sign Out" style:UIBarButtonItemStylePlain target:self action:@selector(onSignOutButton)];
-
-    // Uncomment the following line to preserve selection between presentations.
-    // self.clearsSelectionOnViewWillAppear = NO;
+    self.navigationItem.leftBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:@"Sign Out" style:UIBarButtonItemStylePlain target:self action:@selector(onSignOutButton)];
+    self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"compose.png"] style:UIBarButtonItemStylePlain target:self action:@selector(compose)];
+    self.navigationItem.titleView = [[UIImageView alloc] initWithImage:[UIImage imageNamed:@"twitter_logo.png"]];
  
-    // Uncomment the following line to display an Edit button in the navigation bar for this view controller.
-    // self.navigationItem.rightBarButtonItem = self.editButtonItem;
+    [[UINavigationBar appearance] setBarTintColor:[UIColor colorWithRed:0/255.0f green:172/255.0f blue:237/255.0f alpha:1.0f]];
+    self.navigationController.navigationBar.tintColor = [UIColor whiteColor];
+    UINib *nib = [UINib nibWithNibName:@"TweetCell" bundle:nil];
+    [[self tableView] registerNib:nib forCellReuseIdentifier:@"TweetCell"];
+    
+    UIRefreshControl *refreshControl = [[UIRefreshControl alloc] init];
+    refreshControl.tintColor = [UIColor colorWithRed:0/255.0f green:172/255.0f blue:237/255.0f alpha:1.0f];
+    [refreshControl addTarget:self action:@selector(reload) forControlEvents:UIControlEventValueChanged];
+    self.refreshControl = refreshControl;
 }
 
 - (void)didReceiveMemoryWarning
@@ -63,15 +79,34 @@
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
 {
-    static NSString *CellIdentifier = @"Cell";
-//    UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:CellIdentifier forIndexPath:indexPath];
-    UITableViewCell *cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:nil];
-
+    static NSString *CellIdentifier = @"TweetCell";
+    TweetCell *cell = [tableView dequeueReusableCellWithIdentifier:CellIdentifier forIndexPath:indexPath];
+    
     Tweet *tweet = self.tweets[indexPath.row];
-    cell.textLabel.text = tweet.text;
+    cell.tweetText.text = tweet.text;
+    cell.username.text = tweet.username;
+    cell.screenName.text = tweet.screenName;
+    cell.tweetDate.text = tweet.tweetDate;
+    [cell.profileImageView setImageWithURL:tweet.profileImageURL];
     
     return cell;
 }
+
+
+- (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    Tweet *tweet = self.tweets[indexPath.row];
+    CGSize constraint = CGSizeMake(cellWidth - (cellMargin * 2), 20000.0f);
+    
+    NSDictionary *stringAttributes = [NSDictionary dictionaryWithObject:[UIFont systemFontOfSize:14.0f] forKey: NSFontAttributeName];
+    
+    CGSize textSize = [tweet.text boundingRectWithSize:constraint options: NSStringDrawingTruncatesLastVisibleLine|NSStringDrawingUsesLineFragmentOrigin|NSStringDrawingUsesFontLeading attributes:stringAttributes context:nil].size;
+    
+    
+    CGFloat height = textSize.height;
+    return height + (cellMargin * 2) + nameHeight + spaceBetweenNameAndText;
+}
+
 
 /*
 // Override to support conditional editing of the table view.
@@ -115,7 +150,10 @@
 #pragma mark - Table view delegate
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
-    [tableView deselectRowAtIndexPath:indexPath animated:YES];
+    Tweet *tweet = self.tweets[indexPath.row];
+    TweetViewController *tvc = [[TweetViewController alloc] initWithNibName:@"TweetViewController" bundle:[NSBundle mainBundle]];
+    tvc.tweet = tweet;
+    [self.navigationController pushViewController:tvc animated:YES];
 }
 
 /*
@@ -141,9 +179,15 @@
         NSLog(@"%@", response);
         self.tweets = [Tweet tweetsWithArray:response];
         [self.tableView reloadData];
+        [self.refreshControl endRefreshing];
     } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
         // Do nothing
     }];
+}
+
+- (void)compose {
+    ComposeViewController *cvc = [[ComposeViewController alloc] initWithNibName:@"ComposeViewController" bundle:[NSBundle mainBundle]];
+    [self.navigationController pushViewController:cvc animated:YES];
 }
 
 @end

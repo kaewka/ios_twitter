@@ -87,7 +87,7 @@
 - (IBAction)retweetTap:(id)sender {
     [[TwitterClient instance] retweet:self.tweet.idStr success:^(AFHTTPRequestOperation *operation, id response) {
         
-        [self.retweetButton setImage:[UIImage imageNamed:@"retweet copy.png"] forState:UIControlStateNormal];
+        [self.retweetButton setImage:[UIImage imageNamed:@"retweet.png"] forState:UIControlStateNormal];
     } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
         NSLog(@"%@", error.localizedDescription);
     }];
@@ -95,7 +95,7 @@
 
 - (IBAction)favoriteTap:(id)sender {
     [[TwitterClient instance] favorite:self.tweet.idStr success:^(AFHTTPRequestOperation *operation, id response) {
-        [self.favoriteImageView setImage:[UIImage imageNamed:@"favorite copy.png"] forState:UIControlStateNormal];
+        [self.favoriteImageView setImage:[UIImage imageNamed:@"favorite.png"] forState:UIControlStateNormal];
     } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
         NSLog(@"%@", error.localizedDescription);
     }];
